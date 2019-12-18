@@ -74,3 +74,22 @@ class CryptoPrediction:
         """
         return data[-1] + h * ((data[-1] - data[0]) / (data.shape[0] - 1))
 
+    def create_examples(self, data, lag):
+        X = []
+        y = []
+        for i in range(1, data.shape[0]):
+            X.append(data[max(0, i-lag):i])
+            y.append(np.array(data[i]))
+        return X,y
+
+btc_df = pd.read_csv("data/Gemini_BTCUSD_d.csv")
+
+cp = CryptoPrediction()
+X, y = cp.create_examples(btc_df["Close"][0:100].to_numpy(), 10)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, shuffle=True)
+# print("X Train: ", X_train)
+# print("Y Train: ", y_train)
+# print("X Test: ", X_test)
+# print("Y Test: ", y_test)
+
+
