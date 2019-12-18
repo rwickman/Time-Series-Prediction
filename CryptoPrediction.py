@@ -2,10 +2,10 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
-
+from sklearn.model_selection import train_test_split, cross_val_score
 
 class CryptoPrediction:
-    def __init__(self, df):
+    def __init__(self, df=None):
         self.df = df
         
     def group_by_year(self, df):
@@ -49,7 +49,7 @@ class CryptoPrediction:
         Return the prediction using the average of the last t observations.
 
         Args:
-            data: A numpy array to make a prediction on.
+            data: A numpy array to use for forecasting
             t: the amount of lagged predictors to use.
         """
         return numpy.mean(data[-t:])
@@ -60,6 +60,17 @@ class CryptoPrediction:
         Return the prediction using the previous observations.
 
         Args:
-            data: A numpy array to make a prediction on.
+            data: A numpy array to use for forecasting.
         """
         return data[-1]
+
+    def drift_forecast(self, data, h):
+        """
+        Return the prediction for the future h observation using change over time.
+
+        Args:
+            data: A numpy array to use for forecasting.
+            h: the number of time steps in the future to make prediction on.
+        """
+        return data[-1] + h * ((data[-1] - data[0]) / (data.shape[0] - 1))
+
