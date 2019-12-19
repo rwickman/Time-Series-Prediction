@@ -1,9 +1,11 @@
-from ../CryptoPrediction import CryptoPrediction
+import sys
+sys.path.append('..')
+from CryptoPrediction import CryptoPrediction
 import pandas as pd
 import numpy as np
 from scipy import stats, special
 
-btc_df = pd.read_csv("data/Gemini_BTCUSD_d.csv")
+btc_df = pd.read_csv("../data/Gemini_BTCUSD_d.csv")
 
 cp = CryptoPrediction()
 data = btc_df["Close"][::-1].to_numpy()
