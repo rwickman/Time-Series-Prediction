@@ -1,4 +1,4 @@
-from CryptoPrediction import CryptoPrediction
+from ../CryptoPrediction import CryptoPrediction
 import pandas as pd
 import numpy as np
 from scipy import stats, special

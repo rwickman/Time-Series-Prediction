@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import statsmodels as sm
 
 class CryptoPlotting:
     def group_by_year(self, df):
@@ -33,5 +34,5 @@ class CryptoPlotting:
         plt.show()
     
     def plot_pacf_(self):
-        sm.graphics.tsa.plot_acf(self.df["Close"][::-1])
+        sm.graphics.tsa.plot_pacf(self.df["Close"][::-1])
         plt.show()
