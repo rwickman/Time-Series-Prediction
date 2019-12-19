@@ -4,13 +4,16 @@ from CryptoPrediction import CryptoPrediction
 import pandas as pd
 import numpy as np
 from scipy import stats, special
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
 
-btc_df = pd.read_csv("../data/Gemini_BTCUSD_d.csv")
+btc_df = pd.read_csv("../data/gemini_BTCUSD_2019_1min.csv")
 
 cp = CryptoPrediction()
 data = btc_df["Close"][::-1].to_numpy()
 # data, maxlog = stats.boxcox(data)
 X, y = cp.create_examples(data, 14)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20)
 
 y_pred_naive = []
 for i in range(len(X)):
@@ -36,6 +39,9 @@ y_pred_drift_partial = []
 for i in range(len(X)):
     y_pred_drift_partial.append(cp.drift_forecast(X[i], 1))
 
+lin_reg = LinearRegression().fit(X_train, y_train)
+y_pred_lin_reg = lin_reg.predict(X_test)
+
 # inverse_boxcox = lambda el : special.inv_boxcox(el, maxlog)
 # y = np.array(list(map(inverse_boxcox, y)))
 
@@ -46,9 +52,10 @@ for i in range(len(X)):
 # y_pred_drift = np.array(list(map(inverse_boxcox, y_pred_drift)))
 # y_pred_drift_partial = np.array(list(map(inverse_boxcox, y_pred_drift_partial)))
 
-print("NAIVE MSE: ", cp.mse(np.array(y_pred_naive), y))
-print("AVERAGE MSE (3)", cp.mse(np.array(y_pred_avg_3), y))
-print("AVERAGE MSE (7)", cp.mse(np.array(y_pred_avg_7), y))
-print("AVERAGE MSE (14)", cp.mse(np.array(y_pred_avg_14), y))
-print("DRIFT (all data) MSE: ", cp.mse(np.array(y_pred_drift), y))
-print("DRIFT Partial MSE: ", cp.mse(np.array(y_pred_drift_partial), y))
+print("NAIVE MSE: ", cp.mse(y_pred_naive, y))
+print("AVERAGE MSE (3)", cp.mse(y_pred_avg_3, y))
+print("AVERAGE MSE (7)", cp.mse(y_pred_avg_7, y))
+print("AVERAGE MSE (14)", cp.mse(y_pred_avg_14, y))
+print("DRIFT (all data) MSE: ", cp.mse(y_pred_drift, y))
+print("DRIFT Partial MSE: ", cp.mse(y_pred_drift_partial, y))
+print("Linear Regression MSE: ", cp.mse(y_pred_lin_reg, y_test))
