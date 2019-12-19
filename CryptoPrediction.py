@@ -46,9 +46,10 @@ class CryptoPrediction:
         X = []
         y = []
         for i in range(1, data.shape[0]):
-            X.append(data[max(0, i-lag):i])
+            x_example = data[max(0, i-lag):i]
+            X.append(np.pad(x_example, (lag - x_example.shape[0], 0)))
             y.append(np.array(data[i]))
-        return X,y
+        return np.array(X), np.array(y)
 
 
 
