@@ -1,12 +1,14 @@
 from CryptoPrediction import CryptoPrediction
 import pandas as pd
 import numpy as np
-
+from scipy import stats, special
 
 btc_df = pd.read_csv("data/Gemini_BTCUSD_d.csv")
 
 cp = CryptoPrediction()
-X, y = cp.create_examples(btc_df["Close"][::-1].to_numpy(), 14)
+data = btc_df["Close"][::-1].to_numpy()
+# data, maxlog = stats.boxcox(data)
+X, y = cp.create_examples(data, 14)
 
 y_pred_naive = []
 for i in range(len(X)):
@@ -32,6 +34,15 @@ y_pred_drift_partial = []
 for i in range(len(X)):
     y_pred_drift_partial.append(cp.drift_forecast(X[i], 1))
 
+# inverse_boxcox = lambda el : special.inv_boxcox(el, maxlog)
+# y = np.array(list(map(inverse_boxcox, y)))
+
+# y_pred_naive = np.array(list(map(inverse_boxcox, y_pred_naive)))
+# y_pred_avg_3 = np.array(list(map(inverse_boxcox, y_pred_avg_3)))
+# y_pred_avg_7 = np.array(list(map(inverse_boxcox, y_pred_avg_7)))
+# y_pred_avg_14 = np.array(list(map(inverse_boxcox, y_pred_avg_14)))
+# y_pred_drift = np.array(list(map(inverse_boxcox, y_pred_drift)))
+# y_pred_drift_partial = np.array(list(map(inverse_boxcox, y_pred_drift_partial)))
 
 print("NAIVE MSE: ", cp.mse(np.array(y_pred_naive), y))
 print("AVERAGE MSE (3)", cp.mse(np.array(y_pred_avg_3), y))
