@@ -3,54 +3,73 @@ sys.path.append('..')
 from CryptoPrediction  import CryptoPrediction
 import pandas as pd
 import numpy as np
-import keras
 import tensorflow as tf
 import datetime
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
-import math
-
+import math, json
+from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.callbacks import TensorBoard, EarlyStopping
 
 cp = CryptoPrediction()
-btc_df = pd.read_csv("../data/gemini_BTCUSD_2019_1min.csv", usecols=["Close"])
-
-data = btc_df["Close"][::-1].to_numpy()
-
-# Normalize the dataset
-scaler = MinMaxScaler(feature_range=(0, 1))
-data = scaler.fit_transform(data.reshape(-1,1))
-data = np.array([v[0] for v in data])
 lags = 14
-X, y = cp.create_examples(data, lags)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, shuffle=False)
 
-X_train = X_train.reshape(X_train.shape[0], 1, X_train.shape[1])
-X_test = X_test.reshape(X_test.shape[0], 1, X_test.shape[1])
+X_train = np.load("../data/btc_min_close_lag_14_x_train.npy")
+y_train = np.load("../data/btc_min_close_lag_14_y_train.npy")
 
-model = keras.models.Sequential()
-model.add(keras.layers.LSTM(32, input_shape=(1, lags)))
-model.add(keras.layers.Dense(1))
+X_test = np.load("../data/btc_min_close_lag_14_x_test.npy")
+y_test = np.load("../data/btc_min_close_lag_14_y_test.npy")
+
+X_val = np.load("../data/btc_min_close_lag_14_x_val.npy")
+y_val = np.load("../data/btc_min_close_lag_14_y_val.npy")
+
+stats = json.load(open("../data/btc_min_close_stats"))
+btc_mean = stats["mean"]
+btc_std = stats["std"]
+
+#X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, shuffle=True)
+
+X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], 1)
+X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
+X_val = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
+
+model = tf.keras.models.Sequential()
+model.add(LSTM(100, input_shape=(lags, 1)))
+model.add(Dense(1))
+model.summary()
+
 model.compile(loss='mean_squared_error', optimizer='adam')
 log_dir="logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1)
+es_callback = EarlyStopping(monitor='val_loss', patience=25)
+model.fit(X_train, y_train, epochs=100, batch_size=256, verbose=1, validation_data=(X_val, y_val), callbacks=[tensorboard_callback, es_callback])
 
-model.fit(X_train, y_train, epochs=100, batch_size=64, verbose=1, validation_data=(X_test, y_test), callbacks=[tensorboard_callback])
- 
+results = model.evaluate(X_test, y_test)
+print('test loss:', results)
+
 
 # make predictions
-y_train_pred = model.predict(X_train)
-y_test_pred = model.predict(X_test)
+y_train_pred = model.predict(X_train)[:, 0]
+y_test_pred = model.predict(X_test)[:, 0]
 
-# invert predictions
-y_train_pred = scaler.inverse_transform(y_train_pred)
-y_train = scaler.inverse_transform([y_train])
-y_test_pred = scaler.inverse_transform(y_test_pred)
-y_test = scaler.inverse_transform([y_test])
+# calculate mean squared error
+print("BEFORE INVERSE")
+trainScore = cp.mse(y_train, y_train_pred)
+print("Train Score: {}  MSE".format(trainScore))
+testScore = cp.mse(y_test, y_test_pred)
+print("Test Score: {} MSE".format(testScore))
 
-# calculate root mean squared error
-trainScore = mean_squared_error(y_train[0], y_train_pred[:,0])
-print('Train Score: %.2f MSE' % (trainScore))
-testScore = mean_squared_error(y_test[0], y_test_pred[:,0])
-print('Test Score: %.2f MSE' % (testScore))
+# Inverse standardize scaling
+y_train_pred = y_train_pred * stats["std"] + stats["mean"]
+y_test_pred = y_test_pred * stats["std"] + stats["mean"]
+y_train = y_train * stats["std"] + stats["mean"]
+y_test =  y_test * stats["std"] + stats["mean"]
 
+# calculate mean squared error
+print("AFTER INVERSE")
+trainScore = cp.mse(y_train, y_train_pred)
+print("Train Score: {} MSE".format(trainScore))
+testScore = cp.mse(y_test, y_test_pred)
+print("Test Score: {} MSE".format(testScore))

@@ -8,12 +8,10 @@ from sklearn.linear_model import LinearRegression, Lasso
 from sklearn.model_selection import train_test_split
 import statsmodels.api as sm
 
-btc_df = pd.read_csv("../data/Gemini_BTCUSD_d.csv")
 
 cp = CryptoPrediction()
-data = btc_df["Close"][::-1].to_numpy()
-data, maxlog = stats.boxcox(data)
-X, y = cp.create_examples(data, 14)
+X = np.load("../data/btc_min_close_lag_14_x.npy")
+y = np.load("../data/btc_min_close_lag_14_y.npy")
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, shuffle=False)
 
 y_pred_naive = []
@@ -32,9 +30,11 @@ y_pred_avg_14 = []
 for i in range(len(X)):
     y_pred_avg_14.append(cp.avg_forecast(X[i], 14))
 
+"""
 y_pred_drift = []
 for i in range(len(X)):
     y_pred_drift.append(cp.drift_forecast(btc_df["Close"][0:i+1].to_numpy(), 1))
+"""
 
 y_pred_drift_partial = []
 for i in range(len(X)):
@@ -66,7 +66,7 @@ print("NAIVE MSE: ", cp.mse(y_pred_naive, y))
 print("AVERAGE MSE (3)", cp.mse(y_pred_avg_3, y))
 print("AVERAGE MSE (7)", cp.mse(y_pred_avg_7, y))
 print("AVERAGE MSE (14)", cp.mse(y_pred_avg_14, y))
-print("DRIFT (all data) MSE: ", cp.mse(y_pred_drift, y))
+#print("DRIFT (all data) MSE: ", cp.mse(y_pred_drift, y))
 print("DRIFT Partial MSE: ", cp.mse(y_pred_drift_partial, y))
 print("Linear Regression MSE: ", cp.mse(y_pred_lin_reg, y_test))
 print("Lasso Regression MSE: ", cp.mse(y_pred_lasso_reg, y_test))
