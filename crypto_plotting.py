@@ -1,9 +1,11 @@
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import statsmodels as sm
+import statsmodels.api as sm
 
 class CryptoPlotting:
+    def __init__(self):
+        self.data = np.load("data/btc_min_close.npy")
+
     def group_by_year(self, df):
         # Convert to datetime
         df["Date"] = pd.to_datetime(df['Date'], errors='coerce')
@@ -30,9 +32,12 @@ class CryptoPlotting:
         plt.show()
 
     def plot_acf(self):
-        sm.graphics.tsa.plot_acf(self.df["Close"][::-1])
+        sm.graphics.tsa.plot_acf(self.data[-200000:], lags=240)
         plt.show()
     
-    def plot_pacf_(self):
-        sm.graphics.tsa.plot_pacf(self.df["Close"][::-1])
+    def plot_pacf(self):
+        sm.graphics.tsa.plot_pacf(self.data[-500000:], lags=60, zero=False)
         plt.show()
+
+plotter = CryptoPlotting()
+plotter.plot_pacf()
