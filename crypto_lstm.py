@@ -21,10 +21,10 @@ class CryptoLSTM(CryptoModel):
         self.batch_size = batch_size
         self.patience = patience
         self.use_early_stopping = use_early_stopping
-        self.build_model()
+        #self.build_model()
         self.read_data(reshape=True)
 
-    def build_model(self):
+    def build(self):
         self.model = tf.keras.models.Sequential()
         self.model.add(LSTM(self.units, input_shape=(self.lag, 1)))
         self.model.add(Dense(self.num_pred_steps))
@@ -58,7 +58,7 @@ class CryptoLSTM(CryptoModel):
         self.model = load_model("saved_models/lstm")
 
 
-model = CryptoLSTM(lag=16, num_pred_steps=10, epochs=20, batch_size=256)
-print(model.train())
-model.plot_val_pred()
-model.save()
+#model = CryptoLSTM(lag=16, num_pred_steps=10, epochs=10, batch_size=256)
+#print(model.train())
+#model.plot_val_pred()
+#model.save()

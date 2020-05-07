@@ -15,10 +15,10 @@ class CryptoLinear(CryptoModel):
             num_pred_steps=1): 
         self.lag = lag
         self.num_pred_steps = num_pred_steps
-        self.build_model()
+        self.build()
         self.read_data()
 
-    def build_model(self):
+    def build(self):
         self.model = LinearRegression()        
     
     def train(self):
@@ -78,7 +78,7 @@ class CryptoLinear(CryptoModel):
         plt.title("Histogram of Residuals")
         plt.show()
 
-lr = CryptoLinear(16, 10)
-lr.train()
-lr.residual_plots()
+#lr = CryptoLinear(16, 10)
+#lr.train()
+#lr.residual_plots()
 

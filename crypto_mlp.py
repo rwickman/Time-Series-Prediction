@@ -9,7 +9,7 @@ from tensorflow.keras.optimizers import Adam
 
 class CryptoMLP(CryptoModel):
     def __init__(self,
-            lag=14,
+            lag=16,
             units=64,
             epochs=25,
             batch_size=16,
@@ -24,10 +24,9 @@ class CryptoMLP(CryptoModel):
         self.patience = patience
         self.use_early_stopping = use_early_stopping
         self.num_hidden = num_hidden
-        self.build_model()
         self.read_data()
 
-    def build_model(self):
+    def build(self):
         #self.model = tf.keras.models.Sequential()
         inputs = Input(shape=(self.lag, ))
         x = Dense(self.units, activation="relu")(inputs)
@@ -59,6 +58,8 @@ class CryptoMLP(CryptoModel):
         return history.history
 
     def predict(self, x):
+        print(x)
+        print(x.shape)
         return self.model.predict(x)
 
     def save(self):
@@ -67,9 +68,10 @@ class CryptoMLP(CryptoModel):
     def load(self):
         self.model = load_model("saved_models/mlp")
 
-mlp_model = CryptoMLP(epochs=20, lag=16, batch_size=256, units=128, num_hidden=3, num_pred_steps=10)
-mlp_model.load()
+
+#mlp_model = CryptoMLP(epochs=20, lag=16, batch_size=256, units=128, num_hidden=3, num_pred_steps=10)
+#mlp_model.load()
 #print(mlp_model.train())
-mlp_model.plot_val_one_step()
-mlp_model.plot_val_pred()
-mlp_model.save()
+#mlp_model.plot_val_one_step()
+#mlp_model.plot_val_pred()
+#mlp_model.save()
