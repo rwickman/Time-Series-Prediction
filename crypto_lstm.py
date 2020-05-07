@@ -1,13 +1,12 @@
-import numpy as np
 import tensorflow as tf
 import datetime
+from crypto_model import CryptoModel
 
-from crypto_prediction  import CryptoPrediction
 from tensorflow.keras.layers import LSTM, Dense
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.callbacks import TensorBoard, EarlyStopping
 
-class CryptoLSTM:
+class CryptoLSTM(CryptoModel):
     def __init__(self,
             lag=14,
             units=100,
@@ -16,19 +15,18 @@ class CryptoLSTM:
             patience=20,
             use_early_stopping=False,
             num_pred_steps=1): 
-        self.lag = lag
+        super().__init__(lag, num_pred_steps)
         self.units = units
-        sel.epochs = epochs
+        self.epochs = epochs
         self.batch_size = batch_size
         self.patience = patience
         self.use_early_stopping = use_early_stopping
-        self.num_pred_steps = num_pred_steps
         self.build_model()
-        self.read_data()
+        self.read_data(reshape=True)
 
     def build_model(self):
         self.model = tf.keras.models.Sequential()
-        self.model.add(LSTM(self.units, input_shape=(lags, 1)))
+        self.model.add(LSTM(self.units, input_shape=(self.lag, 1)))
         self.model.add(Dense(self.num_pred_steps))
         self.model.compile(loss='mean_squared_error', optimizer='adam')
         self.model.summary()
@@ -46,20 +44,21 @@ class CryptoLSTM:
                 batch_size=self.batch_size,
                 verbose=1,
                 validation_data=(self.X_val, self.y_val),
-                callbacks=callbacks)
+                callbacks=callbacks,
+                shuffle=True)
         return history.history
 
-    def read_data(self):
-        self.X_train = np.load("data/btc_min_close_lag_{}_x_train.npy".format(self.lag))
-        self.y_train = np.load("data/btc_min_close_out_{}_y_train.npy".format(self.num_pred_steps))
-        
-        self.X_test = np.load("data/btc_min_close_lag_{}_x_test.npy".format(self.lag))
-        self.y_test = np.load("data/btc_min_close_out_{}_y_test.npy".format(self.num_pred_steps))
+    def predict(self, x):
+        return self.model.predict(x)
 
-        self.X_val = np.load("data/btc_min_close_lag_{}_x_val.npy".format(self.lag))
-        self.y_val = np.load("data/btc_min_close_out_{}_y_val.npy".format(self.num_pred_steps))
+    def save(self):
+        self.model.save("saved_models/lstm")
 
-        self.X_train = self.X_train.reshape(self.X_train.shape[0], self.X_train.shape[1], 1)
-        self.X_test = self.X_test.reshape(self.X_test.shape[0], self.X_test.shape[1], 1)
-        self.X_val = self.X_val.reshape(X_val.shape[0], self.X_val.shape[1], 1)
+    def load(self):
+        self.model = load_model("saved_models/lstm")
 
+
+model = CryptoLSTM(lag=16, num_pred_steps=10, epochs=20, batch_size=256)
+print(model.train())
+model.plot_val_pred()
+model.save()
